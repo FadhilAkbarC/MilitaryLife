@@ -49,7 +49,7 @@ export async function createProfile(
   } catch (err) {
     await client.query('ROLLBACK');
     request.log.error(err, 'profile-create-failed');
-    reply.code(500).send({ error: 'Failed to create profile' });
+    throw err;
   } finally {
     client.release();
   }

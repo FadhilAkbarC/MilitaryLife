@@ -20,7 +20,7 @@ export function sendValidationError(reply: FastifyReply, err: unknown): void {
     return;
   }
 
-  reply.code(500).send({ error: 'Internal server error' });
+  throw err;
 }
 
 export async function ensureAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {

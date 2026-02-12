@@ -21,7 +21,7 @@ export async function getEventPool(request: FastifyRequest, reply: FastifyReply,
     reply.code(200).send({ items });
   } catch (err) {
     request.log.error(err, 'events-pool-failure');
-    reply.code(500).send({ error: 'Failed to load event pool' });
+    throw err;
   } finally {
     client.release();
   }

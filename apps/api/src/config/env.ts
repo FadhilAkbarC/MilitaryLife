@@ -25,7 +25,9 @@ const envSchema = z.object({
   PAUSE_TIMEOUT_MINUTES: z.coerce.number().int().min(5).max(180).default(30),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
   AUTO_MIGRATE_ON_BOOT: booleanFromEnv.default(true),
-  AUTO_MIGRATE_STRICT: booleanFromEnv.default(false)
+  AUTO_MIGRATE_STRICT: booleanFromEnv.default(true),
+  DB_HEALTHCHECK_TIMEOUT_MS: z.coerce.number().int().min(250).max(10_000).default(1500),
+  DB_HEALTHCHECK_INTERVAL_MS: z.coerce.number().int().min(500).max(60_000).default(5000)
 });
 
 export type EnvConfig = Omit<z.infer<typeof envSchema>, 'API_PORT'> & { API_PORT: number };

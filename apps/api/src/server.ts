@@ -1,6 +1,7 @@
 import { buildApp } from './app.js';
 import { env } from './config/env.js';
 import { runMigrations } from './db/run-migrations.js';
+import { probeDatabase } from './utils/db.js';
 
 if (env.AUTO_MIGRATE_ON_BOOT) {
   try {
@@ -17,6 +18,8 @@ if (env.AUTO_MIGRATE_ON_BOOT) {
 const app = await buildApp();
 
 try {
+  await probeDatabase(app.db, app.env.DB_HEALTHCHECK_TIMEOUT_MS);
+
   await app.listen({
     host: app.env.API_HOST,
     port: app.env.API_PORT

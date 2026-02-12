@@ -11,16 +11,6 @@ function sendAuthError(reply: FastifyReply, err: unknown): void {
     return;
   }
 
-  if (dbError.code === '42P01') {
-    reply.code(503).send({ error: 'Database schema is not initialized yet. Retry in a moment.' });
-    return;
-  }
-
-  if (dbError.code === '3D000' || dbError.code === '08001') {
-    reply.code(503).send({ error: 'Database is temporarily unavailable. Retry in a moment.' });
-    return;
-  }
-
   sendValidationError(reply, err);
 }
 

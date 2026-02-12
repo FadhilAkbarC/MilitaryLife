@@ -47,9 +47,14 @@ export async function runMigrations(connectionString: string): Promise<void> {
     `);
 
     const migrationsDir = await resolveMigrationsDir();
+    // eslint-disable-next-line no-console
+    console.info(`[migrations] using directory: ${migrationsDir}`);
     const files = (await readdir(migrationsDir))
       .filter((name) => name.endsWith('.sql'))
       .sort((a, b) => a.localeCompare(b));
+
+    const applied: string[] = [];
+    const skipped: string[] = [];
 
     for (const filename of files) {
       const already = await client.query<{ filename: string }>(
@@ -58,13 +63,22 @@ export async function runMigrations(connectionString: string): Promise<void> {
       );
 
       if ((already.rowCount ?? 0) > 0) {
+        skipped.push(filename);
         continue;
       }
 
       const sql = await readFile(join(migrationsDir, filename), 'utf8');
+      // eslint-disable-next-line no-console
+      console.info(`[migrations] applying ${filename}`);
       await client.query(sql);
       await client.query('INSERT INTO schema_migrations (filename) VALUES ($1)', [filename]);
+      applied.push(filename);
     }
+
+    // eslint-disable-next-line no-console
+    console.info(
+      `[migrations] done. applied=${applied.length} skipped=${skipped.length} total=${files.length}`
+    );
   } finally {
     client.release();
     await pool.end();

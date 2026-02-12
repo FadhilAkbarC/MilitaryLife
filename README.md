@@ -191,9 +191,11 @@ Backend:
 - `COOKIE_SECRET`
 - `SESSION_DAYS` (default `30`)
 - `PAUSE_TIMEOUT_MINUTES` (default `30`)
-- `CORS_ORIGIN`
+- `CORS_ORIGIN` (comma-separated allowlist, e.g. `https://militarylife.vercel.app,http://localhost:3000`)
 - `AUTO_MIGRATE_ON_BOOT` (default `true`)
-- `AUTO_MIGRATE_STRICT` (default `false`, set `true` to fail startup if migration fails)
+- `AUTO_MIGRATE_STRICT` (default `true`, fail startup if migration fails)
+- `DB_HEALTHCHECK_TIMEOUT_MS` (default `1500`)
+- `DB_HEALTHCHECK_INTERVAL_MS` (default `5000`)
 
 Frontend:
 
@@ -219,6 +221,7 @@ corepack pnpm --filter @mls/api migrate
 ```
 
 8. Confirm health endpoint.
+   - `GET /api/v1/health` now checks DB readiness and returns `503` if DB is down.
 
 ## B. Vercel (Frontend)
 

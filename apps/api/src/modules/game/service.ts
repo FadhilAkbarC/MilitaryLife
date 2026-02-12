@@ -109,7 +109,7 @@ async function withLockedState(
   } catch (err) {
     await client.query('ROLLBACK');
     request.log.error(err, 'game-service-failure');
-    reply.code(500).send({ error: 'Internal server error' });
+    throw err;
   } finally {
     client.release();
   }
