@@ -192,6 +192,7 @@ Backend:
 - `SESSION_DAYS` (default `30`)
 - `PAUSE_TIMEOUT_MINUTES` (default `30`)
 - `CORS_ORIGIN`
+- `AUTO_MIGRATE_ON_BOOT` (default `true`)
 
 Frontend:
 
@@ -223,7 +224,7 @@ corepack pnpm --filter @mls/api migrate
 1. Create Vercel project from this repo.
 2. Set **Root Directory** to `apps/web`.
 3. Add env vars:
-   - `BACKEND_ORIGIN=https://<railway-api-domain>`
+   - `BACKEND_ORIGIN=https://<railway-api-domain>` (scheme recommended; config auto-normalizes if omitted)
    - `NEXT_PUBLIC_API_BASE=/api/v1`
 4. Deploy.
 

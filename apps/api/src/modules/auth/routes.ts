@@ -1,7 +1,28 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { parseOrThrow, sendValidationError } from '../../utils/validate.js';
 import { loginSchema, registerSchema } from './schema.js';
 import { attachAuth, getMe, loginUser, logoutUser, registerUser } from './service.js';
+
+function sendAuthError(reply: FastifyReply, err: unknown): void {
+  const dbError = err as { code?: string };
+
+  if (dbError.code === '23505') {
+    reply.code(409).send({ error: 'Email already registered' });
+    return;
+  }
+
+  if (dbError.code === '42P01') {
+    reply.code(503).send({ error: 'Database schema is not initialized yet. Retry in a moment.' });
+    return;
+  }
+
+  if (dbError.code === '3D000' || dbError.code === '08001') {
+    reply.code(503).send({ error: 'Database is temporarily unavailable. Retry in a moment.' });
+    return;
+  }
+
+  sendValidationError(reply, err);
+}
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post('/register', async (request, reply) => {
@@ -9,7 +30,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const body = parseOrThrow(registerSchema, request.body);
       await registerUser(request, reply, body.email, body.password);
     } catch (err) {
-      sendValidationError(reply, err);
+      sendAuthError(reply, err);
     }
   });
 
@@ -18,7 +39,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const body = parseOrThrow(loginSchema, request.body);
       await loginUser(request, reply, body.email, body.password);
     } catch (err) {
-      sendValidationError(reply, err);
+      sendAuthError(reply, err);
     }
   });
 

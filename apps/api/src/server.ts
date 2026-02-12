@@ -1,4 +1,10 @@
 import { buildApp } from './app.js';
+import { env } from './config/env.js';
+import { runMigrations } from './db/run-migrations.js';
+
+if (env.AUTO_MIGRATE_ON_BOOT) {
+  await runMigrations(env.DATABASE_URL);
+}
 
 const app = await buildApp();
 

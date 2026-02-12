@@ -3,6 +3,16 @@ import { z } from 'zod';
 
 config();
 
+const booleanFromEnv = z.preprocess((value) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return value;
+
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return value;
+}, z.boolean());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().optional(),
@@ -13,7 +23,8 @@ const envSchema = z.object({
   COOKIE_SECRET: z.string().min(16),
   SESSION_DAYS: z.coerce.number().int().min(1).max(90).default(30),
   PAUSE_TIMEOUT_MINUTES: z.coerce.number().int().min(5).max(180).default(30),
-  CORS_ORIGIN: z.string().default('http://localhost:3000')
+  CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  AUTO_MIGRATE_ON_BOOT: booleanFromEnv.default(true)
 });
 
 export type EnvConfig = Omit<z.infer<typeof envSchema>, 'API_PORT'> & { API_PORT: number };
