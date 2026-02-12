@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg';
 import type { BranchCode, CountryCode } from '@mls/shared/constants';
+import { generateUuid } from '../../utils/crypto.js';
 
 export async function findProfileByUserId(client: PoolClient, userId: string): Promise<{ id: string } | null> {
   const result = await client.query<{ id: string }>(`SELECT id FROM profiles WHERE user_id = $1`, [userId]);
@@ -18,16 +19,17 @@ export async function createProfileAndGameState(
     nowMs: number;
   }
 ): Promise<{ profileId: string }> {
+  const profileId = generateUuid();
   const created = await client.query<{ id: string }>(
     `
-      INSERT INTO profiles (user_id, name, start_age, country, branch)
-      VALUES ($1, $2, $3, $4::country_code, $5::branch_code)
+      INSERT INTO profiles (id, user_id, name, start_age, country, branch)
+      VALUES ($1, $2, $3, $4, $5::country_code, $6::branch_code)
       RETURNING id
     `,
-    [input.userId, input.name, input.startAge, input.country, input.branch]
+    [profileId, input.userId, input.name, input.startAge, input.country, input.branch]
   );
 
-  const profileId = created.rows[0].id;
+  const insertedProfileId = created.rows[0].id;
 
   await client.query(
     `
@@ -45,8 +47,8 @@ export async function createProfileAndGameState(
         next_event_day
       ) VALUES ($1, $2, $3, 0, 0, 0, 70, 80, 0, 0, 3)
     `,
-    [profileId, input.sessionId, input.nowMs]
+    [insertedProfileId, input.sessionId, input.nowMs]
   );
 
-  return { profileId };
+  return { profileId: insertedProfileId };
 }

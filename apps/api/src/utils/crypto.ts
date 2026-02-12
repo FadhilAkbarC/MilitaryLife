@@ -1,4 +1,4 @@
-import { randomBytes, createHash } from 'node:crypto';
+import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 
 export function generateToken(bytes = 48): string {
@@ -7,6 +7,10 @@ export function generateToken(bytes = 48): string {
 
 export function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
+}
+
+export function generateUuid(): string {
+  return randomUUID();
 }
 
 export async function hashPassword(password: string): Promise<string> {

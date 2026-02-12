@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { generateToken, hashPassword, sha256, verifyPassword } from '../../utils/crypto.js';
+import { generateToken, generateUuid, hashPassword, sha256, verifyPassword } from '../../utils/crypto.js';
 import {
   createSession,
   createUser,
@@ -141,13 +141,19 @@ export async function registerUser(request: FastifyRequest, reply: FastifyReply,
   }
 
   const passwordHash = await hashPassword(password);
-  const userId = await createUser(request.server.db, email, passwordHash);
+  const userId = generateUuid();
+  await createUser(request.server.db, { id: userId, email, passwordHash });
 
   await deleteSessionsByUserId(request.server.db, userId);
   const sid = generateToken();
   const tokenHash = sha256(sid);
   const expiresAt = buildSessionExpiry(request.server.env.SESSION_DAYS);
-  await createSession(request.server.db, userId, tokenHash, expiresAt.toISOString());
+  await createSession(request.server.db, {
+    id: generateUuid(),
+    userId,
+    tokenHash,
+    expiresAtIso: expiresAt.toISOString()
+  });
 
   setSessionCookie(reply, sid, request.server.env.NODE_ENV === 'production', expiresAt);
   reply.code(201).send({ userId, email, profileId: null });
@@ -171,7 +177,12 @@ export async function loginUser(request: FastifyRequest, reply: FastifyReply, em
   const sid = generateToken();
   const tokenHash = sha256(sid);
   const expiresAt = buildSessionExpiry(request.server.env.SESSION_DAYS);
-  await createSession(request.server.db, user.id, tokenHash, expiresAt.toISOString());
+  await createSession(request.server.db, {
+    id: generateUuid(),
+    userId: user.id,
+    tokenHash,
+    expiresAtIso: expiresAt.toISOString()
+  });
 
   const profile = await findSessionByTokenHash(request.server.db, tokenHash);
 

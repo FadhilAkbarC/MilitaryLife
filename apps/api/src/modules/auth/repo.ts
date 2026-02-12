@@ -39,25 +39,25 @@ export async function findUserById(executor: Pool | PoolClient, userId: string):
   );
 }
 
-export async function createUser(executor: Pool | PoolClient, email: string, passwordHash: string): Promise<string> {
-  const result = await executor.query<{ id: string }>(
-    `INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id`,
-    [email, passwordHash]
-  );
-  return result.rows[0].id;
+export async function createUser(
+  executor: Pool | PoolClient,
+  input: { id: string; email: string; passwordHash: string }
+): Promise<void> {
+  await executor.query(`INSERT INTO users (id, email, password_hash) VALUES ($1, $2, $3)`, [
+    input.id,
+    input.email,
+    input.passwordHash
+  ]);
 }
 
 export async function createSession(
   executor: Pool | PoolClient,
-  userId: string,
-  tokenHash: string,
-  expiresAtIso: string
-): Promise<string> {
-  const result = await executor.query<{ id: string }>(
-    `INSERT INTO sessions (user_id, token_hash, expires_at) VALUES ($1, $2, $3::timestamptz) RETURNING id`,
-    [userId, tokenHash, expiresAtIso]
+  input: { id: string; userId: string; tokenHash: string; expiresAtIso: string }
+): Promise<void> {
+  await executor.query(
+    `INSERT INTO sessions (id, user_id, token_hash, expires_at) VALUES ($1, $2, $3, $4::timestamptz)`,
+    [input.id, input.userId, input.tokenHash, input.expiresAtIso]
   );
-  return result.rows[0].id;
 }
 
 export async function findSessionByTokenHash(
