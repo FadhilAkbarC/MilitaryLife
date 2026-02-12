@@ -187,6 +187,9 @@ Backend:
 - `API_PORT` (default `4000`)
 - `API_HOST` (default `0.0.0.0`)
 - `DATABASE_URL`
+- `DATABASE_PRIVATE_URL` (optional fallback on Railway; preferred internal network URL)
+- `DATABASE_PUBLIC_URL` (optional fallback)
+- `PGHOST` / `PGPORT` / `PGDATABASE` / `PGUSER` / `PGPASSWORD` (optional fallback set)
 - `SESSION_SECRET`
 - `COOKIE_SECRET`
 - `SESSION_DAYS` (default `30`)
@@ -213,6 +216,8 @@ Railway deploy behavior is pinned via `railway.toml` (`build:api` + root `start`
 3. Add API service from this repo root (`/`) so `railway.toml` is used.
 4. Set region to **Singapore**.
 5. Set environment variables (from section 8).
+   - Ensure DB service is linked to API service so Railway injects database vars.
+   - Do not use `localhost` for `DATABASE_URL` in Railway production.
 6. Deploy API service.
 7. Run migration command in Railway service shell:
 
@@ -222,6 +227,8 @@ corepack pnpm --filter @mls/api migrate
 
 8. Confirm health endpoint.
    - `GET /api/v1/health` now checks DB readiness and returns `503` if DB is down.
+
+If startup logs show `ECONNREFUSED ::1:5432`, your API is using local DB config in Railway. Link PostgreSQL service and set a non-local `DATABASE_URL` (or rely on `DATABASE_PRIVATE_URL`).
 
 ## B. Vercel (Frontend)
 

@@ -3,6 +3,79 @@ import { z } from 'zod';
 
 config();
 
+type RawEnv = Record<string, string | undefined>;
+
+function cleanValue(value: string | undefined): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function isRailwayRuntime(raw: RawEnv): boolean {
+  return Boolean(
+    cleanValue(raw.RAILWAY_PROJECT_ID) ||
+      cleanValue(raw.RAILWAY_SERVICE_ID) ||
+      cleanValue(raw.RAILWAY_ENVIRONMENT_ID)
+  );
+}
+
+function parseHostFromConnectionString(connectionString: string): string | null {
+  try {
+    const parsed = new URL(connectionString);
+    return parsed.hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function isLoopbackHost(host: string): boolean {
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
+function isLoopbackConnectionString(connectionString: string): boolean {
+  const host = parseHostFromConnectionString(connectionString);
+  return host ? isLoopbackHost(host) : false;
+}
+
+function buildDatabaseUrlFromPgParts(raw: RawEnv): string | undefined {
+  const host = cleanValue(raw.PGHOST);
+  const port = cleanValue(raw.PGPORT);
+  const database = cleanValue(raw.PGDATABASE);
+  const user = cleanValue(raw.PGUSER);
+  const password = cleanValue(raw.PGPASSWORD);
+
+  if (!host || !port || !database || !user || !password) {
+    return undefined;
+  }
+
+  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+}
+
+function resolveDatabaseUrl(raw: RawEnv): string | undefined {
+  const candidates = [
+    cleanValue(raw.DATABASE_URL),
+    cleanValue(raw.DATABASE_PRIVATE_URL),
+    cleanValue(raw.DATABASE_PUBLIC_URL),
+    cleanValue(raw.POSTGRES_URL),
+    cleanValue(raw.POSTGRESQL_URL),
+    cleanValue(raw.PG_URL),
+    buildDatabaseUrlFromPgParts(raw)
+  ].filter((value): value is string => Boolean(value));
+
+  if (candidates.length === 0) {
+    return undefined;
+  }
+
+  if (isRailwayRuntime(raw)) {
+    const nonLoopback = candidates.find((value) => !isLoopbackConnectionString(value));
+    if (nonLoopback) {
+      return nonLoopback;
+    }
+  }
+
+  return candidates[0];
+}
+
 const booleanFromEnv = z.preprocess((value) => {
   if (typeof value === 'boolean') return value;
   if (typeof value !== 'string') return value;
@@ -32,11 +105,25 @@ const envSchema = z.object({
 
 export type EnvConfig = Omit<z.infer<typeof envSchema>, 'API_PORT'> & { API_PORT: number };
 
-const parsed = envSchema.safeParse(process.env);
+const rawEnv = process.env as RawEnv;
+const resolvedDatabaseUrl = resolveDatabaseUrl(rawEnv);
+
+const parsed = envSchema.safeParse({
+  ...process.env,
+  DATABASE_URL: resolvedDatabaseUrl
+});
 
 if (!parsed.success) {
   // eslint-disable-next-line no-console
   console.error('Invalid environment variables', parsed.error.flatten().fieldErrors);
+  process.exit(1);
+}
+
+if (isRailwayRuntime(rawEnv) && isLoopbackConnectionString(parsed.data.DATABASE_URL)) {
+  // eslint-disable-next-line no-console
+  console.error(
+    'Invalid DATABASE_URL for Railway runtime. Configure a non-local database URL via DATABASE_PRIVATE_URL or DATABASE_URL.'
+  );
   process.exit(1);
 }
 
