@@ -4,7 +4,7 @@ Production-ready, ultra-lightweight real-time military career simulator.
 
 ## 1. Product Overview
 
-- **Frontend**: Next.js 14 App Router + Tailwind + Zustand
+- **Frontend**: Next.js 15 App Router + Tailwind + Zustand
 - **Backend**: Fastify REST API + PostgreSQL (Railway)
 - **Hosting**:
   - Frontend: Vercel
