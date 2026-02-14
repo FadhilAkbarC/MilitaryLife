@@ -23,8 +23,8 @@ export function AvatarFrame({ name, subtitle, uniformTone, ribbons, medals, shou
             ))}
           </div>
           <div className="absolute right-2 top-24 grid grid-cols-3 gap-1">
-            {ribbons.slice(0, 12).map((r) => (
-              <div key={r} className="h-2 w-6 rounded-sm border border-border bg-accent/80" title={r} />
+            {ribbons.slice(0, 12).map((r, idx) => (
+              <div key={`${r}-${idx}`} className="h-2 w-6 rounded-sm border border-border bg-accent/80" title={r} />
             ))}
           </div>
         </div>

@@ -51,6 +51,7 @@ export default function PeoplePage() {
 
   useEffect(() => {
     if (!selectedNpc) return;
+    const selectedNpcId = selectedNpc.id;
     const timer = window.setInterval(() => {
       const lines = [
         `${selectedNpc.name}: Requesting updated mission route.`,
@@ -61,13 +62,13 @@ export default function PeoplePage() {
       ];
 
       setInteractionMap((prev) => {
-        const current = prev[selectedNpc.id] ?? initialLog(selectedNpc);
+        const current = prev[selectedNpcId] ?? initialLog(selectedNpc);
         const message = lines[(current.length + selectedNpc.relationScore) % lines.length];
-        return { ...prev, [selectedNpc.id]: [...current.slice(-8), message] };
+        return { ...prev, [selectedNpcId]: [...current.slice(-9), message] };
       });
     }, 3200);
     return () => window.clearInterval(timer);
-  }, [selectedNpc]);
+  }, [selectedNpc?.id]);
 
   const sendCommand = (cmd: string) => {
     if (!selectedNpc) return;
@@ -75,7 +76,7 @@ export default function PeoplePage() {
       const current = prev[selectedNpc.id] ?? initialLog(selectedNpc);
       return {
         ...prev,
-        [selectedNpc.id]: [...current.slice(-8), `You: ${cmd}`, `${selectedNpc.name}: Command acknowledged.`]
+        [selectedNpc.id]: [...current.slice(-8), `You: ${cmd}`, `${selectedNpc.name}: Command acknowledged.`].slice(-10)
       };
     });
   };
@@ -139,7 +140,7 @@ export default function PeoplePage() {
               <p className="text-xs uppercase tracking-[0.1em] text-muted">Realtime Interaction</p>
               <div className="mt-2 max-h-44 overflow-y-auto rounded border border-border bg-bg/60 p-2 text-xs text-muted">
                 {activeLog.map((line, idx) => (
-                  <p key={`${line}-${idx}`} className="mb-1">
+                  <p key={`${selectedNpc?.id ?? 'npc'}-${idx}-${line}`} className="mb-1">
                     {line}
                   </p>
                 ))}
