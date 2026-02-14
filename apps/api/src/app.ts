@@ -76,7 +76,7 @@ export async function buildApp() {
   await app.register(gameRoutes, { prefix: '/api/v1/game' });
   await app.register(eventsRoutes, { prefix: '/api/v1/events' });
 
-  let readinessCache:
+  let healthCache:
     | {
         statusCode: 200 | 503;
         payload: Record<string, unknown>;
@@ -84,21 +84,17 @@ export async function buildApp() {
       }
     | null = null;
 
-  app.get('/api/v1/health', async (_request, reply) => {
-    reply.code(200).send({ ok: true, service: 'api', timestamp: Date.now() });
-  });
-
-  app.get('/api/v1/health/ready', async (request, reply) => {
+  app.get('/api/v1/health', async (request, reply) => {
     const now = Date.now();
-    if (readinessCache && now < readinessCache.expiresAt) {
-      reply.code(readinessCache.statusCode).send(readinessCache.payload);
+    if (healthCache && now < healthCache.expiresAt) {
+      reply.code(healthCache.statusCode).send(healthCache.payload);
       return;
     }
 
     try {
       await probeDatabase(app.db, app.env.DB_HEALTHCHECK_TIMEOUT_MS);
       const payload = { ok: true, db: 'up', timestamp: Date.now() };
-      readinessCache = {
+      healthCache = {
         statusCode: 200,
         payload,
         expiresAt: Date.now() + app.env.DB_HEALTHCHECK_INTERVAL_MS
@@ -113,7 +109,7 @@ export async function buildApp() {
         error: 'Service temporarily unavailable',
         timestamp: Date.now()
       };
-      readinessCache = {
+      healthCache = {
         statusCode: 503,
         payload,
         expiresAt: Date.now() + app.env.DB_HEALTHCHECK_INTERVAL_MS
