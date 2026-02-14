@@ -199,6 +199,8 @@ Backend:
 - `AUTO_MIGRATE_STRICT` (default `true`, fail startup if migration fails)
 - `DB_HEALTHCHECK_TIMEOUT_MS` (default `5000`)
 - `DB_HEALTHCHECK_INTERVAL_MS` (default `5000`)
+- `DB_SSL_MODE` (`auto` default, set `require` for managed PostgreSQL providers like Railway)
+- `STARTUP_DB_CHECK_STRICT` (default `false`, if `true` API exits when first DB probe fails)
 
 Frontend:
 
@@ -219,6 +221,7 @@ Railway deploy behavior is pinned via `railway.toml` (`build:api` + root `start`
    - Ensure DB service is linked to API service so Railway injects database vars.
    - Do not use `localhost` for `DATABASE_URL` in Railway production.
 6. Deploy API service.
+   - For fresh Railway Postgres, set `DATABASE_PRIVATE_URL` (or `DATABASE_URL`) to your service endpoint, e.g. `postgresql://<user>:<pass>@postgres-fxbi-production.up.railway.app:5432/<db>?sslmode=require`.
 7. Run migration command in Railway service shell:
 
 ```bash

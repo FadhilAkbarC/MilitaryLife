@@ -16,6 +16,8 @@ class ApiError extends Error {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api/v1';
 
+let snapshotBackoffUntilMs = 0;
+
 async function request<T>(path: string, method: HttpMethod, body?: unknown): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     method,
@@ -63,7 +65,21 @@ export const api = {
     return request<{ profileId: string }>('/profile/create', 'POST', payload);
   },
   snapshot() {
-    return request<{ snapshot: GameSnapshot }>('/game/snapshot', 'GET');
+    if (Date.now() < snapshotBackoffUntilMs) {
+      throw new ApiError(503, 'Snapshot sementara cooldown karena backend belum siap');
+    }
+
+    return request<{ snapshot: GameSnapshot }>('/game/snapshot', 'GET')
+      .then((payload) => {
+        snapshotBackoffUntilMs = 0;
+        return payload;
+      })
+      .catch((error: unknown) => {
+        if (error instanceof ApiError && error.status >= 500) {
+          snapshotBackoffUntilMs = Date.now() + 15_000;
+        }
+        throw error;
+      });
   },
   pause(reason: 'DECISION' | 'MODAL' | 'SUBPAGE') {
     return request<{ pauseToken: string; pauseExpiresAtMs: number | null; snapshot: GameSnapshot }>('/game/pause', 'POST', {

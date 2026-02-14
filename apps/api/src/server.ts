@@ -28,5 +28,12 @@ try {
   });
 } catch (err) {
   app.log.error(err);
-  process.exit(1);
+  if (env.STARTUP_DB_CHECK_STRICT) {
+    process.exit(1);
+  }
+
+  await app.listen({
+    host: app.env.API_HOST,
+    port: app.env.API_PORT
+  });
 }
