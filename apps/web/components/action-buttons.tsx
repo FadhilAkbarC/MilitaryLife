@@ -5,12 +5,14 @@ const links = [
   { href: '/dashboard/training', label: 'Training' },
   { href: '/dashboard/deployment', label: 'Deployment' },
   { href: '/dashboard/profile', label: 'Profile' },
-  { href: '/dashboard/decision-log', label: 'Decision Log' }
+  { href: '/dashboard/decision-log', label: 'Decision Log' },
+  { href: '/dashboard/hierarchy', label: 'Hierarchy V2' },
+  { href: '/dashboard/people', label: 'NPC / People' }
 ];
 
 export function ActionButtons() {
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-7">
       {links.map((link) => (
         <Link
           key={link.href}
