@@ -135,10 +135,21 @@ export function DashboardShell() {
       if (!snapshot?.pendingDecision) {
         return;
       }
-      const response = await api.chooseDecision(snapshot.pendingDecision.eventId, optionId);
-      setSnapshot(response.snapshot);
+
+      try {
+        const response = await api.chooseDecision(snapshot.pendingDecision.eventId, optionId);
+        setSnapshot(response.snapshot);
+        setError(null);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 409) {
+          setError('Decision state changed on server. Syncing latest snapshot...');
+          await loadSnapshot();
+          return;
+        }
+        setError(err instanceof Error ? err.message : 'Failed to submit decision');
+      }
     },
-    [setSnapshot, snapshot]
+    [loadSnapshot, setError, setSnapshot, snapshot]
   );
 
   const branchOptions = useMemo(() => BRANCH_OPTIONS[profileForm.country], [profileForm.country]);
