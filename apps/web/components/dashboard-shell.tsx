@@ -132,22 +132,34 @@ export function DashboardShell() {
 
   const handleDecision = useCallback(
     async (optionId: string) => {
+      const submit = async (eventId: number, allowRetry: boolean): Promise<void> => {
+        try {
+          const response = await api.chooseDecision(eventId, optionId);
+          setSnapshot(response.snapshot);
+          setError(null);
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 409) {
+            setError('Decision state changed on server. Syncing latest snapshot...');
+            const refreshed = await api.snapshot();
+            setSnapshot(refreshed.snapshot);
+
+            const refreshedDecision = refreshed.snapshot.pendingDecision;
+            if (allowRetry && refreshedDecision?.options.some((option) => option.id === optionId)) {
+              await submit(refreshedDecision.eventId, false);
+              return;
+            }
+            return;
+          }
+          setError(err instanceof Error ? err.message : 'Failed to submit decision');
+        }
+      };
+
       if (!snapshot?.pendingDecision) {
+        await loadSnapshot();
         return;
       }
 
-      try {
-        const response = await api.chooseDecision(snapshot.pendingDecision.eventId, optionId);
-        setSnapshot(response.snapshot);
-        setError(null);
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 409) {
-          setError('Decision state changed on server. Syncing latest snapshot...');
-          await loadSnapshot();
-          return;
-        }
-        setError(err instanceof Error ? err.message : 'Failed to submit decision');
-      }
+      await submit(snapshot.pendingDecision.eventId, true);
     },
     [loadSnapshot, setError, setSnapshot, snapshot]
   );
