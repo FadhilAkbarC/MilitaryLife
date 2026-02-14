@@ -97,7 +97,6 @@ function statusFromRoll(roll: number): NpcStatus {
   return 'KIA';
 }
 
-
 function behaviorTag(seedValue: number): NpcV2Profile['behaviorTag'] {
   const roll = Math.abs(seedValue) % 4;
   if (roll === 0) return 'DISCIPLINED';
@@ -110,7 +109,6 @@ export function buildWorldV2(snapshot: GameSnapshot): WorldV2State {
   const playerMedals = medalsFor(snapshot);
   const playerRibbons = playerMedals.map((_, i) => pick(RIBBONS, seeded(snapshot, i)));
 
-  // NPC identity rotates in waves to simulate recruits replacing old NPCs over time.
   const cycleLength = 45;
   const cycle = Math.floor(snapshot.gameDay / cycleLength);
   const replacementsThisCycle = (snapshot.gameDay % cycleLength) % 7;

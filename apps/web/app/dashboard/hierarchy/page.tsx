@@ -49,7 +49,9 @@ export default function HierarchyPage() {
           <h1 className="text-lg font-semibold text-text">Hierarchy, Current Office Holders & NPC Profiles</h1>
         </div>
         <div className="flex gap-2">
-          <button onClick={refreshSnapshot} className="rounded border border-border bg-bg px-3 py-2 text-xs text-text">Refresh</button>
+          <button onClick={refreshSnapshot} className="rounded border border-border bg-bg px-3 py-2 text-xs text-text">
+            Refresh
+          </button>
           <Link href="/dashboard" className="rounded border border-border bg-bg px-3 py-2 text-xs text-text">
             Back to Dashboard
           </Link>
@@ -61,11 +63,21 @@ export default function HierarchyPage() {
 
       {world ? (
         <div className="grid grid-cols-2 gap-2 cyber-panel p-3 text-xs text-muted sm:grid-cols-5">
-          <p>Active: <span className="text-text">{world.stats.active}</span></p>
-          <p>Injured: <span className="text-text">{world.stats.injured}</span></p>
-          <p>Reserve: <span className="text-text">{world.stats.reserve}</span></p>
-          <p>KIA: <span className="text-text">{world.stats.kia}</span></p>
-          <p>Replacements: <span className="text-text">{world.stats.replacementsThisCycle}</span></p>
+          <p>
+            Active: <span className="text-text">{world.stats.active}</span>
+          </p>
+          <p>
+            Injured: <span className="text-text">{world.stats.injured}</span>
+          </p>
+          <p>
+            Reserve: <span className="text-text">{world.stats.reserve}</span>
+          </p>
+          <p>
+            KIA: <span className="text-text">{world.stats.kia}</span>
+          </p>
+          <p>
+            Replacements: <span className="text-text">{world.stats.replacementsThisCycle}</span>
+          </p>
         </div>
       ) : null}
 
@@ -75,8 +87,12 @@ export default function HierarchyPage() {
             <p className="text-[10px] uppercase tracking-[0.1em] text-muted">Tier {idx + 1} Command</p>
             <h2 className="text-sm font-semibold text-text">{npc.name}</h2>
             <p className="mt-1 text-xs text-muted">{npc.role}</p>
-            <p className="text-xs text-muted">{npc.rank} · {npc.branch}</p>
-            <p className="text-xs text-muted">{npc.division} / {npc.subdivision}</p>
+            <p className="text-xs text-muted">
+              {npc.rank} · {npc.branch}
+            </p>
+            <p className="text-xs text-muted">
+              {npc.division} / {npc.subdivision}
+            </p>
             <p className="mt-2 text-xs text-text">Medals: {npc.medals.join(' · ')}</p>
             <p className="text-xs text-text">Ribbons: {npc.ribbons.join(' · ')}</p>
           </article>
