@@ -36,8 +36,13 @@ export function DashboardShell() {
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [decisionBusy, setDecisionBusy] = useState(false);
   const decisionInFlightRef = useRef(false);
+  const snapshotCooldownUntilRef = useRef(0);
 
   const loadSnapshot = useCallback(async () => {
+    if (Date.now() < snapshotCooldownUntilRef.current) {
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await api.snapshot();
@@ -55,9 +60,15 @@ export function DashboardShell() {
           setLoading(false);
           return;
         }
+        if (err.status >= 500) {
+          snapshotCooldownUntilRef.current = Date.now() + 15_000;
+          setError('Server sementara bermasalah (5xx). Menunggu sebelum sinkronisasi ulang...');
+          return;
+        }
         setError(err.message);
         return;
       }
+      snapshotCooldownUntilRef.current = Date.now() + 15_000;
       setError('Unable to load game snapshot');
     }
   }, [router, setError, setLoading, setSnapshot]);
@@ -146,8 +157,13 @@ export function DashboardShell() {
         } catch (err) {
           if (err instanceof ApiError && err.status === 409) {
             setError('Decision sudah berubah di server. Sinkronisasi data terbaru...');
-            const refreshed = await api.snapshot();
-            setSnapshot(refreshed.snapshot);
+            try {
+              const refreshed = await api.snapshot();
+              setSnapshot(refreshed.snapshot);
+            } catch {
+              snapshotCooldownUntilRef.current = Date.now() + 15_000;
+              setError('Decision berubah, tetapi server belum siap (5xx). Coba lagi beberapa detik.');
+            }
             return;
           }
           setError(err instanceof Error ? err.message : 'Failed to submit decision');
